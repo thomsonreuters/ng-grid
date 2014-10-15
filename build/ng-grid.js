@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 04/29/2014 10:21
+* Compiled At: 10/15/2014 14:56
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -1529,6 +1529,10 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
                 totalWidth += ngColumn.width = parseInt(ngColumn.width, 10);
             }
         });
+
+        if (self.config.groups.length) {
+            totalWidth += 25;
+        }
         if (percentArray.length > 0) {
             self.config.maintainColumnRatios = self.config.maintainColumnRatios !== false;
             var percentWidth = 0; 
@@ -1598,7 +1602,7 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
               self.config.groups = tempArr;
               self.rowFactory.filteredRowsChanged();
               $scope.$emit('ngGridEventGroups', a);
-            }, true));
+            }));
              $scope.$on('$destroy', $scope.$watch('columns', function (a) {
                 if(!$scope.isColumnResizing){
                     domUtilityService.RebuildGrid($scope, self);
