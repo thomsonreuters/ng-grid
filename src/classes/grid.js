@@ -149,6 +149,9 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
         //all of the items selected in the grid. In single select mode there will only be one item in the array.
         selectedItems: [],
         
+        //Width of row selection checkbox column
+        selectionCheckboxColumnWidth: 25,
+
         //Disable row selections by clicking on the row and only when the checkbox is clicked.
         selectWithCheckboxOnly: false,
         
@@ -280,8 +283,8 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
     self.elementDims = {
         scrollW: 0,
         scrollH: 0,
-        rowIndexCellW: 25,
-        rowSelectedCellW: 25,
+        rowIndexCellW: self.config.selectionCheckboxColumnWidth,
+        rowSelectedCellW: self.config.selectionCheckboxColumnWidth,
         rootMaxW: 0,
         rootMaxH: 0
     };
@@ -411,12 +414,14 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
                 if (self.config.showSelectionCheckbox) {
                     //if visible, takes up 25 pixels
                     if(ngCol.originalIndex === 0 && ngCol.visible){
-                        totalWidth += 25;
+                        totalWidth += self.config.selectionCheckboxColumnWidth;
                     }
                     // The originalIndex will be offset 1 when including the selection column
                     origIndex--;
                 }
                 indexMap[origIndex] = i;
+            } else if (ngCol.isAggCol && ngCol.visible){ // aggregate columns are 25px in length. 
+                totalWidth+=25;
             }
         });
 
@@ -435,8 +440,10 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
                 t = isPercent ? colDef.width : parseInt(colDef.width, 10);
             }
 
+             // has bug for resize event causing NaN for all column width after another http.get
+             // if (isNaN(t) && !$scope.hasUserChangedGridColumnWidths) {
              // check if it is a number
-            if (isNaN(t) && !$scope.hasUserChangedGridColumnWidths) {
+            if (isNaN(t)) {
                 t = colDef.width;
                 // figure out if the width is defined or if we need to calculate it
                 if (t === 'auto') { // set it for now until we have data and subscribe when it changes so we can set the width.
@@ -528,6 +535,9 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
                 // Get the ngColumn that matches the current column from columnDefs
                 var ngColumn = $scope.columns[indexMap[colDef.index]];                
                 ngColumn.width = asteriskVal * colDef.width.length;
+                if (ngColumn.width < ngColumn.minWidth) {
+                    ngColumn.width = ngColumn.minWidth;
+                }
                 if (ngColumn.visible !== false) {
                     totalWidth += ngColumn.width;
                 }
@@ -547,10 +557,10 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
     self.init = function() {
         return self.initTemplates().then(function(){
             //factories and services
-            $scope.selectionProvider = new ngSelectionProvider(self, $scope, $parse);
+            $scope.selectionProvider = new ngSelectionProvider(self, $scope, $parse, $utils);
             $scope.domAccessProvider = new ngDomAccessProvider(self);
             self.rowFactory = new ngRowFactory(self, $scope, domUtilityService, $templateCache, $utils);
-            self.searchProvider = new ngSearchProvider($scope, self, $filter);
+            self.searchProvider = new ngSearchProvider($scope, self, $filter, $utils);
             self.styleProvider = new ngStyleProvider($scope, self);
             $scope.$on('$destroy', $scope.$watch('configGroups', function(a) {
               var tempArr = [];
@@ -627,6 +637,7 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
             } else {
                 self.config.sortInfo.directions[indx] = col.sortDirection;
             }
+            $scope.$emit('ngGridEventSorted', self.config.sortInfo);
         } else if (!self.config.useExternalSorting || (self.config.useExternalSorting && self.config.sortInfo )) {
             var isArr = $.isArray(col);
             self.config.sortInfo.columns.length = 0;

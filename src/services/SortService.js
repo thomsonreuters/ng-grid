@@ -1,4 +1,4 @@
-﻿angular.module('ngGrid.services').factory('$sortService', ['$parse', function($parse) {
+﻿angular.module('ngGrid.services').factory('$sortService', ['$parse', '$utilityService', function($parse, $utils) {
     var sortService = {};
     sortService.colSortFnCache = {}; // cache of sorting functions. Once we create them, we don't want to keep re-doing it
     sortService.isCustomSort = false; // track if we're using an internal sort or a user provided sort
@@ -106,24 +106,24 @@
                 col = sortInfo.columns[indx];
                 direction = sortInfo.directions[indx];
                 sortFn = sortService.getSortFn(col, d);
-                
-                var propA = $parse(order[indx])(itemA);
-                var propB = $parse(order[indx])(itemB);
+
+                var propA = $utils.evalProperty(itemA, order[indx]);
+                var propB = $utils.evalProperty(itemB, order[indx]);
                 // if user provides custom sort, we want them to have full control of the sort
                 if (sortService.isCustomSort) {
                     res = sortFn(propA, propB);
                     tem = direction === ASC ? res : 0 - res;
                 } else {
                     // we want to allow zero values to be evaluated in the sort function
-                    if ((!propA && propA !== 0) || (!propB && propB !== 0)) {
+                    if (propA == null || propB == null) {
                         // we want to force nulls and such to the bottom when we sort... which effectively is "greater than"
-                        if (!propB && !propA) {
+                        if (propB == null && propA == null) {
                             tem = 0;
                         }
-                        else if (!propA) {
+                        else if (propA == null) {
                             tem = 1;
                         }
-                        else if (!propB) {
+                        else if (propB == null) {
                             tem = -1;
                         }
                     }
@@ -162,7 +162,7 @@
             if (!item) {
                 return sortFn;
             }
-            sortFn = sortService.guessSortFn($parse(col.field)(item));
+            sortFn = sortService.guessSortFn($parse('entity[\''+col.field.replace(DOT_REGEXP, '\'][\'')+'\']')({entity:item}));
             //cache it
             if (sortFn) {
                 sortService.colSortFnCache[col.field] = sortFn;
