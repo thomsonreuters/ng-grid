@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 01/08/2015 16:37
+* Compiled At: 01/08/2015 17:21
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -38,10 +38,6 @@ angular.module('ngGrid', ['ngGrid.services', 'ngGrid.directives', 'ngGrid.filter
 
 var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
     if ($scope.selectionProvider.selectedItems === undefined || grid.config.noKeyboardNavigation) {
-        return true;
-    }
-
-    if (document.activeElement.tagName === "INPUT") {
         return true;
     }
 
@@ -130,15 +126,19 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
     }
 
     var offset = 0;
-    if (rowIndex !== 0 && (charCode === 38 || charCode === 13 && evt.shiftKey || charCode === 9 && evt.shiftKey && firstInRow)) { 
+    var clickedRow;
+    if (rowIndex !== 0 && (charCode === 38 || charCode === 9 && evt.shiftKey && firstInRow)) { 
         offset = -1;
     }
-    else if (rowIndex !== items.length - 1 && (charCode === 40 || charCode === 13 && !evt.shiftKey || charCode === 9 && lastInRow)) {
+    else if (rowIndex !== items.length - 1 && (charCode === 40 || charCode === 9 && lastInRow)) {
         offset = 1;
     }
+    else if (charCode === 13) {
+        clickedRow = $scope.selectionProvider.clickedRow;
+    }
 
-    if (offset) {
-        var r = items[rowIndex + offset];
+    if (offset || clickedRow) {
+        var r = clickedRow || items[rowIndex + offset];
         if (r.beforeSelectionChange(r, evt)) {
             r.continueSelection(evt);
             $scope.$emit('ngGridEventDigestGridParent');
@@ -3241,6 +3241,9 @@ ngGridDirectives.directive('ngRow', ['$compile', '$domUtilityService', '$templat
                     } else {
                         iElement.append($compile($templateCache.get($scope.gridId + 'rowTemplate.html'))($scope));
                     }
+                    iElement.bind("keydown", function () {
+                        $scope.row.selectionProvider.clickedRow = $scope.row;
+                    });
 					$scope.$on('$destroy', $scope.$on('ngGridEventDigestRow', function(){
 						domUtilityService.digest($scope);
 					}));

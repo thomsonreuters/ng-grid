@@ -19,6 +19,9 @@
                     } else {
                         iElement.append($compile($templateCache.get($scope.gridId + 'rowTemplate.html'))($scope));
                     }
+                    iElement.bind("keydown", function () {
+                        $scope.row.selectionProvider.clickedRow = $scope.row;
+                    });
 					$scope.$on('$destroy', $scope.$on('ngGridEventDigestRow', function(){
 						domUtilityService.digest($scope);
 					}));

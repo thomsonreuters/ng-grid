@@ -4,10 +4,6 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
         return true;
     }
 
-    if (document.activeElement.tagName === "INPUT") {
-        return true;
-    }
-
     var charCode = evt.which || evt.keyCode,
         newColumnIndex,
         lastInRow = false,
@@ -93,15 +89,19 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
     }
 
     var offset = 0;
-    if (rowIndex !== 0 && (charCode === 38 || charCode === 13 && evt.shiftKey || charCode === 9 && evt.shiftKey && firstInRow)) { //arrow key up or shift enter or tab key and first item in row
+    var clickedRow;
+    if (rowIndex !== 0 && (charCode === 38 || charCode === 9 && evt.shiftKey && firstInRow)) { //arrow key up or tab key and first item in row
         offset = -1;
     }
-    else if (rowIndex !== items.length - 1 && (charCode === 40 || charCode === 13 && !evt.shiftKey || charCode === 9 && lastInRow)) {//arrow key down, enter, or tab key and last item in row?
+    else if (rowIndex !== items.length - 1 && (charCode === 40 || charCode === 9 && lastInRow)) {//arrow key down or tab key and last item in row?
         offset = 1;
     }
+    else if (charCode === 13) {
+        clickedRow = $scope.selectionProvider.clickedRow;
+    }
 
-    if (offset) {
-        var r = items[rowIndex + offset];
+    if (offset || clickedRow) {
+        var r = clickedRow || items[rowIndex + offset];
         if (r.beforeSelectionChange(r, evt)) {
             r.continueSelection(evt);
             $scope.$emit('ngGridEventDigestGridParent');
