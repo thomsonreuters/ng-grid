@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 01/08/2015 17:21
+* Compiled At: 01/13/2015 13:21
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -3478,7 +3478,7 @@ angular.module('ngGrid').run(['$templateCache', function($templateCache) {
     "\n"
   );
   $templateCache.put('cellEditTemplate.html',
-    "<div ng-cell-has-focus ng-dblclick=\"CELL_EDITABLE_CONDITION && editCell()\">\r" +
+    "<div ng-cell-has-focus ng-dblclick=\"CELL_EDITABLE_CONDITION && editCell()\" tabindex=\"0\">\r" +
     "\n" +
     "\t<div ng-edit-cell-if=\"!(isFocused && CELL_EDITABLE_CONDITION)\">\t\r" +
     "\n" +
