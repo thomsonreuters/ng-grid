@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 01/20/2015 12:33
+* Compiled At: 01/20/2015 16:16
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -2879,10 +2879,13 @@ ngGridDirectives.directive('ngCellHasFocus', ['$domUtilityService',
                     if (isFocused && evt.keyCode !== 37 && evt.keyCode !== 38 && evt.keyCode !== 39 && evt.keyCode !== 40 && evt.keyCode !== 9 && !evt.shiftKey) {
                         focusOnInputElement($scope,elm);
                     }
+                    else if(evt.keyCode === 13) {
+                        elm.focus();
+                    }
                     if (isFocused && evt.shiftKey && (evt.keyCode >= 65 && evt.keyCode <= 90)) {
                         focusOnInputElement($scope, elm);
                     }
-                    if (evt.keyCode === 27 || evt.keyCode === 13) {
+                    if (evt.keyCode === 27) {
                         elm.focus();
                     }
                 }
