@@ -192,6 +192,109 @@
                         if (typeof options.init === "function") {
                             options.init(grid, $scope);
                         }
+
+                        var setFocusToViewport = function () {
+                            if (!$scope.selectionProvider.lastFocusedElement || !$scope.selectionProvider.lastFocusedElement.parents(".ngViewport").length) {
+                                if ($scope.renderedRows.length) {
+                                    var tabbableElements = $scope.renderedRows[0].elm.find(":tabbable");
+
+                                    if (!tabbableElements.length) {
+                                        grid.$viewport.find(".ngRow").attr("tabindex", "0");
+                                    }
+
+                                    $scope.selectionProvider.lastFocusedElement = tabbableElements.length ? tabbableElements.first() : $scope.renderedRows[0].elm;
+                                    $scope.selectionProvider.lastClickedRow = $scope.renderedRows[0];
+                                }
+                                else {
+                                    var tabbableElements = $(document).find(":tabbable");
+                                    tabbableElements[tabbableElements.index(grid.$viewport[0]) + 1].focus();
+                                }
+                            }
+
+                            if ($scope.selectionProvider.lastFocusedElement) {
+                                $scope.selectionProvider.lastFocusedElement.focus();
+                            }
+                        };
+
+                        var keydown = function (e) {
+                            if (grid.config.noTabInterference && e.keyCode === 9) {
+                                var tabbableElements = $(document).find(":tabbable");
+                                var parents = $(e.target).parents(".ngViewport");
+
+                                if (parents.length && parents[0] == grid.$viewport[0]) {
+                                    if (e.shiftKey) {
+                                        grid.$viewport.focus();
+                                    }
+                                    else {
+                                        grid.$root.find(".temp-focus").focus();
+                                    }
+
+                                    return true;
+                                }
+
+                                var currentElementIndex = tabbableElements.index(e.target);
+
+                                if (e.shiftKey && currentElementIndex > 0) {
+                                    var prevTabbableElement = tabbableElements[currentElementIndex - 1];
+                                    var parents = $(e.target).parents(".ngViewport");
+
+                                    if (parents.length && parents[0] == grid.$viewport[0]) {
+                                        setFocusToViewport();
+                                        return false;
+                                    }
+                                    else if (prevTabbableElement == grid.$viewport[0]) {
+                                        if (currentElementIndex > 1) {
+                                            $(tabbableElements[currentElementIndex - 2]).focus();
+                                        }
+                                        else {
+                                            grid.$viewport.focus();
+                                        }
+
+                                        return false;
+                                    }
+                                }
+                                else if (!e.shiftKey && currentElementIndex < tabbableElements.length - 1) {
+                                    var nextTabbableElement = tabbableElements[currentElementIndex + 1];
+
+                                    if (nextTabbableElement == grid.$viewport[0]) {
+                                        setFocusToViewport();
+                                        return false;
+                                    }
+                                    else if ($(nextTabbableElement).hasClass("temp-focus")) {
+                                        $(nextTabbableElement).focus();
+                                    }
+                                }
+                            }
+                            else if (e.keyCode === 9) {
+                                var tabbableElements = $(document).find(":tabbable");
+                                var currentElementIndex = tabbableElements.index(e.target);
+
+                                if (currentElementIndex > 0 && e.shiftKey || !e.shiftKey && currentElementIndex < tabbableElements.length - 1) {
+                                    var nextTabbableElement = e.shiftKey ? tabbableElements[currentElementIndex - 1] : tabbableElements[currentElementIndex + 1];
+                                    if (nextTabbableElement == grid.$viewport[0]) {
+                                        grid.$viewport.focus();
+                                    }
+                                }
+                            }
+
+                            return true;
+                        };
+
+                        $(document).bind('keydown', keydown);
+
+                        var tempFocus = function (e) {
+                            if (!e.relatedTarget || !$(e.relatedTarget).parents(".ngViewport").length && e.relatedTarget != grid.$viewport[0]) {
+                                setFocusToViewport();
+                            }
+                        };
+
+                        $(".temp-focus").bind('focus', tempFocus);
+
+                        $scope.$on('$destroy', function () {
+                            $(document).off('keydown', keydown);
+                            $(".temp-focus").off('focus', tempFocus);
+                        });
+
                         return null;
                     });
                 }

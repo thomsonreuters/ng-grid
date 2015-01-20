@@ -27,21 +27,28 @@ ngRow.prototype.ensureEntity = function (expected) {
 	}
 };
 ngRow.prototype.toggleSelected = function (event) {
-	if (!this.config.enableRowSelection && !this.config.enableCellSelection) {
+	if (!this.config.enableRowSelection && !this.config.enableCellSelection || event.target.tagName === "LABEL") {
 		return true;
 	}
+
 	var element = event.target || event;
+
 	//check and make sure its not the bubbling up of our checked 'click' event 
-	if (element.type === "checkbox" && element.parentElement.className !== "ngSelectionCell ng-scope") {
-		return true;
-	}
-	if (this.config.selectWithCheckboxOnly && element.type !== "checkbox") {
+	if (this.config.selectWithCheckboxOnly && !$(element).hasClass("ngSelectionCheckbox")) {
 		this.selectionProvider.lastClickedRow = this;
 		return true;
-	} 
+	}
+
 	if (this.beforeSelectionChange(this, event)) {
 		this.continueSelection(event);
 	}
+
+	var tabbableElements = $(event.currentTarget).find(":tabbable");
+
+	if (tabbableElements.length) {
+		$(tabbableElements[0]).focus();
+	}
+
 	return false;
 };
 ngRow.prototype.alternatingRowClass = function () {

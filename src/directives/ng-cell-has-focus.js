@@ -26,20 +26,16 @@ ngGridDirectives.directive('ngCellHasFocus', ['$domUtilityService',
             };
 
             function mousedown (evt) {
-                if($scope.enableCellEditOnFocus) {
-                    isCellEditableOnMouseDown = true;
-                } else {
-                    elm.focus();
-                }
+                isCellEditableOnMouseDown = true;
                 return true;
             }
 
             function click (evt) {
-                if($scope.enableCellEditOnFocus) {
-                    evt.preventDefault();
-                    isCellEditableOnMouseDown = false;
-                    focusOnInputElement($scope,elm);
-                }
+                evt.preventDefault();
+                isCellEditableOnMouseDown = false;
+                focusOnInputElement($scope,elm);
+
+                return true;
             }
 
             elm.bind('mousedown', mousedown);
@@ -65,13 +61,13 @@ ngGridDirectives.directive('ngCellHasFocus', ['$domUtilityService',
 
             function keydown (evt) {
                 if(!$scope.enableCellEditOnFocus) {
-                    if (isFocused && evt.keyCode !== 37 && evt.keyCode !== 38 && evt.keyCode !== 39 && evt.keyCode !== 40 && evt.keyCode !== 9 && !evt.shiftKey && evt.keyCode !== 13) {
+                    if (isFocused && evt.keyCode !== 37 && evt.keyCode !== 38 && evt.keyCode !== 39 && evt.keyCode !== 40 && evt.keyCode !== 9 && !evt.shiftKey) {
                         focusOnInputElement($scope,elm);
                     }
                     if (isFocused && evt.shiftKey && (evt.keyCode >= 65 && evt.keyCode <= 90)) {
                         focusOnInputElement($scope, elm);
                     }
-                    if (evt.keyCode === 27) {
+                    if (evt.keyCode === 27 || evt.keyCode === 13) {
                         elm.focus();
                     }
                 }
