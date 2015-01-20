@@ -16,12 +16,12 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
         newColumnIndex = visibleCols.indexOf($scope.col);
     }
 
-    if (charCode !== 37 && charCode !== 38 && charCode !== 39 && charCode !== 40 && (grid.config.noTabInterference || charCode !== 9) && charCode !== 13) {
+    if (charCode !== 37 && charCode !== 38 && charCode !== 39 && charCode !== 40 && charCode !== 9 && charCode !== 13) {
         return true;
     }
     
     if ($scope.enableCellSelection) {
-        if (charCode === 9) { //tab key
+        if (charCode === 9) { 
             evt.preventDefault();
         }
 
@@ -75,7 +75,15 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
             }
         }
     }
-  
+    else if (!grid.config.noTabInterference && charCode === 9 || charCode === 37 || charCode === 39) {
+        var tabbableElements = $(evt.target).parents(".ngRow").find(":tabbable");
+
+        if (tabbableElements.length) {
+            firstInRow = evt.target == tabbableElements[0];
+            lastInRow = evt.target == tabbableElements[tabbableElements.length - 1];
+        }
+    }
+
     var items;
     if ($scope.configGroups.length > 0) {
         items = grid.rowFactory.parsedData.filter(function (row) {
@@ -88,14 +96,18 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
     
     var offset = 0;
     var clickedRow;
-    if (rowIndex !== 0 && (charCode === 38 || charCode === 9 && evt.shiftKey && firstInRow)) { //arrow key up or tab key and first item in row
+    if (rowIndex !== 0 && (charCode === 38 || !grid.config.noTabInterference && charCode === 9 && evt.shiftKey && firstInRow || charCode === 37 && firstInRow)) {
         offset = -1;
     }
-    else if (rowIndex !== items.length - 1 && (charCode === 40 || charCode === 9 && lastInRow)) {//arrow key down or tab key and last item in row?
+    else if (rowIndex !== items.length - 1 && (charCode === 40 || !grid.config.noTabInterference && charCode === 9 && !evt.shiftKey && lastInRow || charCode === 39 && lastInRow)) {
         offset = 1;
     }
-    else if (charCode === 13) {
+    else if (charCode === 13 || !grid.config.noTabInterference && charCode === 9 || charCode === 37 || charCode === 39) {
         clickedRow = $scope.selectionProvider.clickedRow;
+
+        if (evt.target == evt.currentTarget) { // .ngViewport
+            clickedRow = $scope.selectionProvider.lastClickedRow = items[0];
+        }
     }
 
     if (offset || clickedRow) {
@@ -110,14 +122,68 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
             else if ($scope.selectionProvider.lastClickedRow.renderedRowIndex <= EXCESS_ROWS + 2) {
                 grid.$viewport.scrollTop(grid.$viewport.scrollTop() - $scope.rowHeight);
             }
-      }
+
+            if (charCode === 38 || charCode === 40) {
+                if ($scope.selectionProvider.lastClickedRow.elm || $scope.selectionProvider.lastClickedRow.renderedRowIndex != undefined) {
+                    var lastClickedRowElement = $scope.selectionProvider.lastClickedRow.elm || $scope.renderedRows[$scope.selectionProvider.lastClickedRow.renderedRowIndex].elm;
+                    var tabbableRowElements = lastClickedRowElement.find(":tabbable");
+
+                    if ($scope.selectionProvider.lastFocusedElementIndex == undefined) {
+                        $scope.selectionProvider.lastFocusedElementIndex = 0;
+                    }
+
+                    if (tabbableRowElements.length) {
+                        $scope.selectionProvider.lastFocusedElement = $(tabbableRowElements[$scope.selectionProvider.lastFocusedElementIndex > tabbableRowElements.length - 1 ? tabbableRowElements.length - 1 : $scope.selectionProvider.lastFocusedElementIndex]);
+                    }
+                    else {
+                        grid.$viewport.find(".ngRow").attr("tabindex", "0");
+                        $scope.selectionProvider.lastFocusedElement = lastClickedRowElement;
+                    }
+
+                    $scope.selectionProvider.lastFocusedElement.focus();
+                }
+            }
+        }
+    }
+
+    if (!grid.config.noTabInterference && charCode === 9 || charCode === 37 || charCode === 39) {
+        var focused = $(":focus");
+        var lastClickedRowElement = $scope.selectionProvider.lastClickedRow.elm || $scope.renderedRows[$scope.selectionProvider.lastClickedRow.renderedRowIndex].elm;
+        var tabbableRowElements = lastClickedRowElement.find(":tabbable");
+
+        if (charCode === 37 || charCode === 9 && evt.shiftKey) {
+            if (firstInRow && offset) {
+                $scope.selectionProvider.lastFocusedElementIndex = tabbableRowElements.length - 1;
+                $scope.selectionProvider.lastFocusedElement = tabbableRowElements.last();
+                charCode !== 9 && $scope.selectionProvider.lastFocusedElement.focus();
+            }
+            else {
+                $scope.selectionProvider.lastFocusedElementIndex = tabbableRowElements.index(focused) - 1;
+                $scope.selectionProvider.lastFocusedElement = $(tabbableRowElements[$scope.selectionProvider.lastFocusedElementIndex]);
+                charCode !== 9 && $scope.selectionProvider.lastFocusedElement.focus();
+            }
+        }
+        else if (charCode === 39 || charCode === 9 && !evt.shiftKey) {
+            if (lastInRow && offset) {
+                $scope.selectionProvider.lastFocusedElementIndex = 0;
+                $scope.selectionProvider.lastFocusedElement = tabbableRowElements.first();
+                charCode !== 9 && $scope.selectionProvider.lastFocusedElement.focus();
+            }
+            else {
+                $scope.selectionProvider.lastFocusedElementIndex = tabbableRowElements.index(focused) + 1;
+                $scope.selectionProvider.lastFocusedElement = $(tabbableRowElements[$scope.selectionProvider.lastFocusedElementIndex]);
+                charCode !== 9 && $scope.selectionProvider.lastFocusedElement.focus();
+            }
+        }
     }
     
     if ($scope.enableCellSelection) {
         setTimeout(function(){
             $scope.domAccessProvider.focusCellElement($scope, $scope.renderedColumns.indexOf(visibleCols[newColumnIndex]));
         }, 3);
+
+        return false;
     }
 
-    return false;
+    return grid.config.noTabInterference && charCode === 9;
 };

@@ -45,8 +45,6 @@ ngGridDirectives.directive('ngViewport', [function() {
             elm.off('mousewheel DOMMouseScroll', mousewheel);
         });
 
-        if (!$scope.enableCellSelection) {
-            $scope.domAccessProvider.selectionHandlers($scope, elm);
-        }
+        $scope.domAccessProvider.selectionHandlers($scope, elm);
     };
 }]);
