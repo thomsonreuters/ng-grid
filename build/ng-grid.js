@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 01/20/2015 16:16
+* Compiled At: 01/22/2015 17:25
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -3204,12 +3204,15 @@ ngGridDirectives.directive('ngGrid', ['$compile', '$filter', '$templateCache', '
                                 else {
                                     var tabbableElements = $(document).find(":tabbable");
                                     tabbableElements[tabbableElements.index(grid.$viewport[0]) + 1].focus();
+                                    return false;
                                 }
                             }
 
                             if ($scope.selectionProvider.lastFocusedElement) {
                                 $scope.selectionProvider.lastFocusedElement.focus();
                             }
+
+                            return true;
                         };
 
                         var keydown = function (e) {
@@ -3232,29 +3235,21 @@ ngGridDirectives.directive('ngGrid', ['$compile', '$filter', '$templateCache', '
 
                                 if (e.shiftKey && currentElementIndex > 0) {
                                     var prevTabbableElement = tabbableElements[currentElementIndex - 1];
-                                    var parents = $(e.target).parents(".ngViewport");
 
-                                    if (parents.length && parents[0] == grid.$viewport[0]) {
-                                        setFocusToViewport();
-                                        return false;
-                                    }
-                                    else if (prevTabbableElement == grid.$viewport[0]) {
-                                        if (currentElementIndex > 1) {
-                                            $(tabbableElements[currentElementIndex - 2]).focus();
-                                        }
-                                        else {
+                                    if ($(prevTabbableElement).hasClass("temp-focus")) {
+                                        if (!setFocusToViewport()) {
                                             grid.$viewport.focus();
                                         }
-
-                                        return false;
+                                        else {
+                                            return false;
+                                        }
                                     }
                                 }
                                 else if (!e.shiftKey && currentElementIndex < tabbableElements.length - 1) {
                                     var nextTabbableElement = tabbableElements[currentElementIndex + 1];
 
                                     if (nextTabbableElement == grid.$viewport[0]) {
-                                        setFocusToViewport();
-                                        return false;
+                                        return !setFocusToViewport();
                                     }
                                     else if ($(nextTabbableElement).hasClass("temp-focus")) {
                                         $(nextTabbableElement).focus();
