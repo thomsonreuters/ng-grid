@@ -208,12 +208,15 @@
                                 else {
                                     var tabbableElements = $(document).find(":tabbable");
                                     tabbableElements[tabbableElements.index(grid.$viewport[0]) + 1].focus();
+                                    return false;
                                 }
                             }
 
                             if ($scope.selectionProvider.lastFocusedElement) {
                                 $scope.selectionProvider.lastFocusedElement.focus();
                             }
+
+                            return true;
                         };
 
                         var keydown = function (e) {
@@ -236,29 +239,21 @@
 
                                 if (e.shiftKey && currentElementIndex > 0) {
                                     var prevTabbableElement = tabbableElements[currentElementIndex - 1];
-                                    var parents = $(e.target).parents(".ngViewport");
 
-                                    if (parents.length && parents[0] == grid.$viewport[0]) {
-                                        setFocusToViewport();
-                                        return false;
-                                    }
-                                    else if (prevTabbableElement == grid.$viewport[0]) {
-                                        if (currentElementIndex > 1) {
-                                            $(tabbableElements[currentElementIndex - 2]).focus();
-                                        }
-                                        else {
+                                    if ($(prevTabbableElement).hasClass("temp-focus")) {
+                                        if (!setFocusToViewport()) {
                                             grid.$viewport.focus();
                                         }
-
-                                        return false;
+                                        else {
+                                            return false;
+                                        }
                                     }
                                 }
                                 else if (!e.shiftKey && currentElementIndex < tabbableElements.length - 1) {
                                     var nextTabbableElement = tabbableElements[currentElementIndex + 1];
 
                                     if (nextTabbableElement == grid.$viewport[0]) {
-                                        setFocusToViewport();
-                                        return false;
+                                        return !setFocusToViewport();
                                     }
                                     else if ($(nextTabbableElement).hasClass("temp-focus")) {
                                         $(nextTabbableElement).focus();
