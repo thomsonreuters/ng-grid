@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 10/15/2014 14:56
+* Compiled At: 02/10/2015 09:24
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -50,12 +50,12 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
         newColumnIndex = visibleCols.indexOf($scope.col);
     }
 
-    if (charCode !== 37 && charCode !== 38 && charCode !== 39 && charCode !== 40 && (grid.config.noTabInterference || charCode !== 9) && charCode !== 13) {
+    if (charCode !== 37 && charCode !== 38 && charCode !== 39 && charCode !== 40 && charCode !== 9 && charCode !== 13) {
         return true;
     }
     
     if ($scope.enableCellSelection) {
-        if (charCode === 9) { //tab key
+        if (charCode === 9) { 
             evt.preventDefault();
         }
 
@@ -109,7 +109,15 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
             }
         }
     }
-  
+    else if (!grid.config.noTabInterference && charCode === 9 || charCode === 37 || charCode === 39) {
+        var tabbableElements = $(evt.target).parents(".ngRow").find(":tabbable");
+
+        if (tabbableElements.length) {
+            firstInRow = evt.target == tabbableElements[0];
+            lastInRow = evt.target == tabbableElements[tabbableElements.length - 1];
+        }
+    }
+
     var items;
     if ($scope.configGroups.length > 0) {
         items = grid.rowFactory.parsedData.filter(function (row) {
@@ -121,15 +129,23 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
     }
     
     var offset = 0;
-    if (rowIndex !== 0 && (charCode === 38 || charCode === 13 && evt.shiftKey || charCode === 9 && evt.shiftKey && firstInRow)) { //arrow key up or shift enter or tab key and first item in row
+    var clickedRow;
+    if (rowIndex !== 0 && (charCode === 38 || !grid.config.noTabInterference && charCode === 9 && evt.shiftKey && firstInRow || charCode === 37 && firstInRow)) {
         offset = -1;
     }
-    else if (rowIndex !== items.length - 1 && (charCode === 40 || charCode === 13 && !evt.shiftKey || charCode === 9 && lastInRow)) {//arrow key down, enter, or tab key and last item in row?
+    else if (rowIndex !== items.length - 1 && (charCode === 40 || !grid.config.noTabInterference && charCode === 9 && !evt.shiftKey && lastInRow || charCode === 39 && lastInRow)) {
         offset = 1;
     }
-    
-    if (offset) {
-        var r = items[rowIndex + offset];
+    else if (charCode === 13 || !grid.config.noTabInterference && charCode === 9 || charCode === 37 || charCode === 39) {
+        clickedRow = $scope.selectionProvider.clickedRow;
+
+        if (evt.target == evt.currentTarget) { // .ngViewport
+            clickedRow = $scope.selectionProvider.lastClickedRow = items[0];
+        }
+    }
+
+    if (offset || clickedRow) {
+        var r = clickedRow || items[rowIndex + offset];
         if (r.beforeSelectionChange(r, evt)) {
             r.continueSelection(evt);
             $scope.$emit('ngGridEventDigestGridParent');
@@ -140,16 +156,70 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
             else if ($scope.selectionProvider.lastClickedRow.renderedRowIndex <= EXCESS_ROWS + 2) {
                 grid.$viewport.scrollTop(grid.$viewport.scrollTop() - $scope.rowHeight);
             }
-      }
+
+            if (charCode === 38 || charCode === 40) {
+                if ($scope.selectionProvider.lastClickedRow.elm || $scope.selectionProvider.lastClickedRow.renderedRowIndex != undefined) {
+                    var lastClickedRowElement = $scope.selectionProvider.lastClickedRow.elm || $scope.renderedRows[$scope.selectionProvider.lastClickedRow.renderedRowIndex].elm;
+                    var tabbableRowElements = lastClickedRowElement.find(":tabbable");
+
+                    if ($scope.selectionProvider.lastFocusedElementIndex == undefined) {
+                        $scope.selectionProvider.lastFocusedElementIndex = 0;
+                    }
+
+                    if (tabbableRowElements.length) {
+                        $scope.selectionProvider.lastFocusedElement = $(tabbableRowElements[$scope.selectionProvider.lastFocusedElementIndex > tabbableRowElements.length - 1 ? tabbableRowElements.length - 1 : $scope.selectionProvider.lastFocusedElementIndex]);
+                    }
+                    else {
+                        grid.$viewport.find(".ngRow").attr("tabindex", "0");
+                        $scope.selectionProvider.lastFocusedElement = lastClickedRowElement;
+                    }
+
+                    $scope.selectionProvider.lastFocusedElement.focus();
+                }
+            }
+        }
+    }
+
+    if (!grid.config.noTabInterference && charCode === 9 || charCode === 37 || charCode === 39) {
+        var focused = $(":focus");
+        var lastClickedRowElement = $scope.selectionProvider.lastClickedRow.elm || $scope.renderedRows[$scope.selectionProvider.lastClickedRow.renderedRowIndex].elm;
+        var tabbableRowElements = lastClickedRowElement.find(":tabbable");
+
+        if (charCode === 37 || charCode === 9 && evt.shiftKey) {
+            if (firstInRow && offset) {
+                $scope.selectionProvider.lastFocusedElementIndex = tabbableRowElements.length - 1;
+                $scope.selectionProvider.lastFocusedElement = tabbableRowElements.last();
+                charCode !== 9 && $scope.selectionProvider.lastFocusedElement.focus();
+            }
+            else {
+                $scope.selectionProvider.lastFocusedElementIndex = tabbableRowElements.index(focused) - 1;
+                $scope.selectionProvider.lastFocusedElement = $(tabbableRowElements[$scope.selectionProvider.lastFocusedElementIndex]);
+                charCode !== 9 && $scope.selectionProvider.lastFocusedElement.focus();
+            }
+        }
+        else if (charCode === 39 || charCode === 9 && !evt.shiftKey) {
+            if (lastInRow && offset) {
+                $scope.selectionProvider.lastFocusedElementIndex = 0;
+                $scope.selectionProvider.lastFocusedElement = tabbableRowElements.first();
+                charCode !== 9 && $scope.selectionProvider.lastFocusedElement.focus();
+            }
+            else {
+                $scope.selectionProvider.lastFocusedElementIndex = tabbableRowElements.index(focused) + 1;
+                $scope.selectionProvider.lastFocusedElement = $(tabbableRowElements[$scope.selectionProvider.lastFocusedElementIndex]);
+                charCode !== 9 && $scope.selectionProvider.lastFocusedElement.focus();
+            }
+        }
     }
     
     if ($scope.enableCellSelection) {
         setTimeout(function(){
             $scope.domAccessProvider.focusCellElement($scope, $scope.renderedColumns.indexOf(visibleCols[newColumnIndex]));
         }, 3);
+
+        return false;
     }
 
-    return false;
+    return grid.config.noTabInterference && charCode === 9;
 };
 
 if (!String.prototype.trim) {
@@ -2272,21 +2342,28 @@ ngRow.prototype.ensureEntity = function (expected) {
 	}
 };
 ngRow.prototype.toggleSelected = function (event) {
-	if (!this.config.enableRowSelection && !this.config.enableCellSelection) {
+	if (!this.config.enableRowSelection && !this.config.enableCellSelection || event.target.tagName === "LABEL") {
 		return true;
 	}
+
 	var element = event.target || event;
+
 	//check and make sure its not the bubbling up of our checked 'click' event 
-	if (element.type === "checkbox" && element.parentElement.className !== "ngSelectionCell ng-scope") {
-		return true;
-	}
-	if (this.config.selectWithCheckboxOnly && element.type !== "checkbox") {
+	if (this.config.selectWithCheckboxOnly && !$(element).hasClass("ngSelectionCheckbox")) {
 		this.selectionProvider.lastClickedRow = this;
 		return true;
-	} 
+	}
+
 	if (this.beforeSelectionChange(this, event)) {
 		this.continueSelection(event);
 	}
+
+	var tabbableElements = $(event.currentTarget).find(":tabbable");
+
+	if (tabbableElements.length) {
+		$(tabbableElements[0]).focus();
+	}
+
 	return false;
 };
 ngRow.prototype.alternatingRowClass = function () {
@@ -3012,20 +3089,16 @@ ngGridDirectives.directive('ngCellHasFocus', ['$domUtilityService',
             };
 
             function mousedown (evt) {
-                if($scope.enableCellEditOnFocus) {
-                    isCellEditableOnMouseDown = true;
-                } else {
-                    elm.focus();
-                }
+                isCellEditableOnMouseDown = true;
                 return true;
             }
 
             function click (evt) {
-                if($scope.enableCellEditOnFocus) {
-                    evt.preventDefault();
-                    isCellEditableOnMouseDown = false;
-                    focusOnInputElement($scope,elm);
-                }
+                evt.preventDefault();
+                isCellEditableOnMouseDown = false;
+                focusOnInputElement($scope,elm);
+
+                return true;
             }
 
             elm.bind('mousedown', mousedown);
@@ -3051,8 +3124,11 @@ ngGridDirectives.directive('ngCellHasFocus', ['$domUtilityService',
 
             function keydown (evt) {
                 if(!$scope.enableCellEditOnFocus) {
-                    if (isFocused && evt.keyCode !== 37 && evt.keyCode !== 38 && evt.keyCode !== 39 && evt.keyCode !== 40 && evt.keyCode !== 9 && !evt.shiftKey && evt.keyCode !== 13) {
+                    if (isFocused && evt.keyCode !== 37 && evt.keyCode !== 38 && evt.keyCode !== 39 && evt.keyCode !== 40 && evt.keyCode !== 9 && !evt.shiftKey) {
                         focusOnInputElement($scope,elm);
+                    }
+                    else if(evt.keyCode === 13) {
+                        elm.focus();
                     }
                     if (isFocused && evt.shiftKey && (evt.keyCode >= 65 && evt.keyCode <= 90)) {
                         focusOnInputElement($scope, elm);
@@ -3400,6 +3476,104 @@ ngGridDirectives.directive('ngGrid', ['$compile', '$filter', '$templateCache', '
                         if (typeof options.init === "function") {
                             options.init(grid, $scope);
                         }
+
+                        var setFocusToViewport = function () {
+                            if (!$scope.selectionProvider.lastFocusedElement || !$scope.selectionProvider.lastFocusedElement.parents(".ngViewport").length) {
+                                if ($scope.renderedRows.length) {
+                                    var tabbableElements = $scope.renderedRows[0].elm.find(":tabbable");
+
+                                    if (!tabbableElements.length) {
+                                        grid.$viewport.find(".ngRow").attr("tabindex", "0");
+                                    }
+
+                                    $scope.selectionProvider.lastFocusedElement = tabbableElements.length ? tabbableElements.first() : $scope.renderedRows[0].elm;
+                                    $scope.selectionProvider.lastClickedRow = $scope.renderedRows[0];
+                                }
+                                else {
+                                    var tabbableElements = $(document).find(":tabbable");
+                                    tabbableElements[tabbableElements.index(grid.$viewport[0]) + 1].focus();
+                                    return false;
+                                }
+                            }
+
+                            if ($scope.selectionProvider.lastFocusedElement) {
+                                $scope.selectionProvider.lastFocusedElement.focus();
+                            }
+
+                            return true;
+                        };
+
+                        var keydown = function (e) {
+                            if (grid.config.noTabInterference && e.keyCode === 9) {
+                                var tabbableElements = $(document).find(":tabbable");
+                                var parents = $(e.target).parents(".ngViewport");
+
+                                if (parents.length && parents[0] == grid.$viewport[0]) {
+                                    if (e.shiftKey) {
+                                        grid.$viewport.focus();
+                                    }
+                                    else {
+                                        grid.$root.find(".temp-focus").focus();
+                                    }
+
+                                    return true;
+                                }
+
+                                var currentElementIndex = tabbableElements.index(e.target);
+
+                                if (e.shiftKey && currentElementIndex > 0) {
+                                    var prevTabbableElement = tabbableElements[currentElementIndex - 1];
+
+                                    if ($(prevTabbableElement).hasClass("temp-focus")) {
+                                        if (!setFocusToViewport()) {
+                                            grid.$viewport.focus();
+                                        }
+                                        else {
+                                            return false;
+                                        }
+                                    }
+                                }
+                                else if (!e.shiftKey && currentElementIndex < tabbableElements.length - 1) {
+                                    var nextTabbableElement = tabbableElements[currentElementIndex + 1];
+
+                                    if (nextTabbableElement == grid.$viewport[0]) {
+                                        return !setFocusToViewport();
+                                    }
+                                    else if ($(nextTabbableElement).hasClass("temp-focus")) {
+                                        $(nextTabbableElement).focus();
+                                    }
+                                }
+                            }
+                            else if (e.keyCode === 9) {
+                                var tabbableElements = $(document).find(":tabbable");
+                                var currentElementIndex = tabbableElements.index(e.target);
+
+                                if (currentElementIndex > 0 && e.shiftKey || !e.shiftKey && currentElementIndex < tabbableElements.length - 1) {
+                                    var nextTabbableElement = e.shiftKey ? tabbableElements[currentElementIndex - 1] : tabbableElements[currentElementIndex + 1];
+                                    if (nextTabbableElement == grid.$viewport[0]) {
+                                        grid.$viewport.focus();
+                                    }
+                                }
+                            }
+
+                            return true;
+                        };
+
+                        $(document).bind('keydown', keydown);
+
+                        var tempFocus = function (e) {
+                            if (!e.relatedTarget || !$(e.relatedTarget).parents(".ngViewport").length && e.relatedTarget != grid.$viewport[0]) {
+                                setFocusToViewport();
+                            }
+                        };
+
+                        $(".temp-focus").bind('focus', tempFocus);
+
+                        $scope.$on('$destroy', function () {
+                            $(document).off('keydown', keydown);
+                            $(".temp-focus").off('focus', tempFocus);
+                        });
+
                         return null;
                     });
                 }
@@ -3465,7 +3639,7 @@ ngGridDirectives.directive('ngInput', [function() {
                         }
                         break;
                     case 13: // Enter (Leave Field)
-                        if(scope.enableCellEditOnFocus && scope.totalFilteredItemsLength() - 1 > scope.row.rowIndex && scope.row.rowIndex > 0  || scope.col.enableCellEdit) {
+                        if(scope.totalFilteredItemsLength() - 1 > scope.row.rowIndex && scope.row.rowIndex > 0  || scope.col.enableCellEdit) {
                             elm.blur();
                         }
                         break;
@@ -3527,6 +3701,9 @@ ngGridDirectives.directive('ngRow', ['$compile', '$domUtilityService', '$templat
                     } else {
                         iElement.append($compile($templateCache.get($scope.gridId + 'rowTemplate.html'))($scope));
                     }
+                    iElement.bind("keydown", function () {
+                        $scope.row.selectionProvider.clickedRow = $scope.row;
+                    });
 					$scope.$on('$destroy', $scope.$on('ngGridEventDigestRow', function(){
 						domUtilityService.digest($scope);
 					}));
@@ -3583,9 +3760,7 @@ ngGridDirectives.directive('ngViewport', [function() {
             elm.off('mousewheel DOMMouseScroll', mousewheel);
         });
 
-        if (!$scope.enableCellSelection) {
-            $scope.domAccessProvider.selectionHandlers($scope, elm);
-        }
+        $scope.domAccessProvider.selectionHandlers($scope, elm);
     };
 }]);
 window.ngGrid.i18n['da'] = {
@@ -3749,7 +3924,7 @@ angular.module('ngGrid').run(['$templateCache', function($templateCache) {
 
 
   $templateCache.put('cellEditTemplate.html',
-    "<div ng-cell-has-focus ng-dblclick=\"CELL_EDITABLE_CONDITION && editCell()\">\r" +
+    "<div ng-cell-has-focus ng-dblclick=\"CELL_EDITABLE_CONDITION && editCell()\" tabindex=\"0\">\r" +
     "\n" +
     "\t<div ng-edit-cell-if=\"!(isFocused && CELL_EDITABLE_CONDITION)\">\t\r" +
     "\n" +
@@ -3892,6 +4067,8 @@ angular.module('ngGrid').run(['$templateCache', function($templateCache) {
     "    </div>\r" +
     "\n" +
     "</div>\r" +
+    "\n" +
+    "<div class=\"temp-focus\" tabindex=\"0\"></div>\r" +
     "\n" +
     "<div ng-grid-footer></div>\r" +
     "\n"
