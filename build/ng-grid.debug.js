@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 02/10/2015 09:24
+* Compiled At: 02/12/2015 13:27
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -33,7 +33,7 @@ var ngGridFilters = angular.module('ngGrid.filters', []);
 // initialization of services into the main module
 angular.module('ngGrid', ['ngGrid.services', 'ngGrid.directives', 'ngGrid.filters']);
 //set event binding on the grid so we can select using the up/down keys
-var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
+var ngMoveSelectionHandler = function($scope, elm, evt, grid, $timeout) {
     if ($scope.selectionProvider.selectedItems === undefined) {
         return true;
     }
@@ -150,32 +150,45 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
             r.continueSelection(evt);
             $scope.$emit('ngGridEventDigestGridParent');
 
+            var scrolled = false;
+
             if ($scope.selectionProvider.lastClickedRow.renderedRowIndex >= $scope.renderedRows.length - EXCESS_ROWS - 2) {
                 grid.$viewport.scrollTop(grid.$viewport.scrollTop() + $scope.rowHeight);
+                scrolled = true;
             }
             else if ($scope.selectionProvider.lastClickedRow.renderedRowIndex <= EXCESS_ROWS + 2) {
                 grid.$viewport.scrollTop(grid.$viewport.scrollTop() - $scope.rowHeight);
+                scrolled = true;
             }
 
-            if (charCode === 38 || charCode === 40) {
-                if ($scope.selectionProvider.lastClickedRow.elm || $scope.selectionProvider.lastClickedRow.renderedRowIndex != undefined) {
-                    var lastClickedRowElement = $scope.selectionProvider.lastClickedRow.elm || $scope.renderedRows[$scope.selectionProvider.lastClickedRow.renderedRowIndex].elm;
-                    var tabbableRowElements = lastClickedRowElement.find(":tabbable");
+            var moveFocus = function () {
+                if (charCode === 38 || charCode === 40) {
+                    if ($scope.selectionProvider.lastClickedRow.elm || $scope.selectionProvider.lastClickedRow.renderedRowIndex != undefined) {
+                        var lastClickedRowElement = $scope.selectionProvider.lastClickedRow.elm || $scope.renderedRows[$scope.selectionProvider.lastClickedRow.renderedRowIndex].elm;
+                        var tabbableRowElements = lastClickedRowElement.find(":tabbable");
 
-                    if ($scope.selectionProvider.lastFocusedElementIndex == undefined) {
-                        $scope.selectionProvider.lastFocusedElementIndex = 0;
-                    }
+                        if ($scope.selectionProvider.lastFocusedElementIndex == undefined) {
+                            $scope.selectionProvider.lastFocusedElementIndex = 0;
+                        }
 
-                    if (tabbableRowElements.length) {
-                        $scope.selectionProvider.lastFocusedElement = $(tabbableRowElements[$scope.selectionProvider.lastFocusedElementIndex > tabbableRowElements.length - 1 ? tabbableRowElements.length - 1 : $scope.selectionProvider.lastFocusedElementIndex]);
-                    }
-                    else {
-                        grid.$viewport.find(".ngRow").attr("tabindex", "0");
-                        $scope.selectionProvider.lastFocusedElement = lastClickedRowElement;
-                    }
+                        if (tabbableRowElements.length) {
+                            $scope.selectionProvider.lastFocusedElement = $(tabbableRowElements[$scope.selectionProvider.lastFocusedElementIndex > tabbableRowElements.length - 1 ? tabbableRowElements.length - 1 : $scope.selectionProvider.lastFocusedElementIndex]);
+                        }
+                        else {
+                            grid.$viewport.find(".ngRow").attr("tabindex", "0");
+                            $scope.selectionProvider.lastFocusedElement = lastClickedRowElement;
+                        }
 
-                    $scope.selectionProvider.lastFocusedElement.focus();
+                        $scope.selectionProvider.lastFocusedElement.focus();
+                    }
                 }
+            };
+
+            if (scrolled) {
+                $timeout(moveFocus);
+            }
+            else {
+                moveFocus();
             }
         }
     }
@@ -1012,7 +1025,7 @@ ngDomAccessProvider.prototype.focusCellElement = function ($scope, index) {
         }
     }
 };
-ngDomAccessProvider.prototype.selectionHandlers = function ($scope, elm) {
+ngDomAccessProvider.prototype.selectionHandlers = function ($scope, elm, $timeout) {
     var doingKeyDown = false;
     var self = this;
 
@@ -1022,7 +1035,7 @@ ngDomAccessProvider.prototype.selectionHandlers = function ($scope, elm) {
             return true;
         } else if (!doingKeyDown) {
             doingKeyDown = true;
-            var ret = ngMoveSelectionHandler($scope, elm, evt, self.grid);
+            var ret = ngMoveSelectionHandler($scope, elm, evt, self.grid, $timeout);
             doingKeyDown = false;
             return ret;
         }
@@ -3171,7 +3184,7 @@ ngGridDirectives.directive('ngCellText',
           });
       };
   });
-ngGridDirectives.directive('ngCell', ['$compile', '$domUtilityService', function ($compile, domUtilityService) {
+ngGridDirectives.directive('ngCell', ['$compile', '$domUtilityService', '$timeout', function ($compile, domUtilityService, $timeout) {
     var ngCell = {
         scope: false,
         compile: function() {
@@ -3200,7 +3213,7 @@ ngGridDirectives.directive('ngCell', ['$compile', '$domUtilityService', function
                 },
                 post: function($scope, iElement) {
                     if ($scope.enableCellSelection) {
-                        $scope.domAccessProvider.selectionHandlers($scope, iElement);
+                        $scope.domAccessProvider.selectionHandlers($scope, iElement, $timeout);
                     }
                     
                     $scope.$on('$destroy', $scope.$on('ngGridEventDigestCell', function() {
@@ -3360,6 +3373,7 @@ ngGridDirectives.directive('ngGrid', ['$compile', '$filter', '$templateCache', '
                         // if it is a string we can watch for data changes. otherwise you won't be able to update the grid data
                         if (typeof options.data === "string") {
                             var dataWatcher = function (a) {
+                                var lastClickedRowEntity = $scope.selectionProvider.lastClickedRow && $scope.selectionProvider.lastClickedRow.entity;
                                 // make a temporary copy of the data
                                 grid.data = $.extend([], a);
                                 grid.rowFactory.fixRowCache();
@@ -3378,6 +3392,34 @@ ngGridDirectives.directive('ngGrid', ['$compile', '$filter', '$templateCache', '
                                     $scope.$emit('ngGridEventSorted', grid.config.sortInfo);
                                 }
                                 $scope.$emit("ngGridEventData", grid.gridId);
+                                $timeout(function () {
+                                    var moveFocus = function () {
+                                        var tabbables;
+                                        var index = $scope.selectionProvider.lastFocusedElementIndex || 0;
+                                        var lastClickedRenderedRow = _.find($scope.renderedRows, function (row) { return lastClickedRowEntity == row.entity; });
+
+                                        if (lastClickedRenderedRow) {
+                                            tabbables = lastClickedRenderedRow.elm.find(":tabbable");
+                                            $scope.selectionProvider.lastClickedRow = lastClickedRenderedRow;
+                                        }
+                                        else {
+                                            var selectedRow = grid.$root.find(".ngRow.selected");
+                                            tabbables = selectedRow && selectedRow.find(":tabbable");
+                                        }
+
+                                        if (tabbables.length) {
+                                            $scope.selectionProvider.lastFocusedElement = $(index < tabbables.length ? tabbables[index] : tabbables[tabbables.length - 1]);
+                                        }
+                                    };
+
+                                    if (lastClickedRowEntity && !_.find($scope.renderedRows, function (row) { return lastClickedRowEntity == row.entity; })) {
+                                        grid.$viewport.scrollTop(grid.data.indexOf(lastClickedRowEntity) * $scope.rowHeight);
+                                        $timeout(moveFocus);
+                                    }
+                                    else {
+                                        moveFocus();
+                                    }
+                                });
                             };
                             $scope.$on('$destroy', $scope.$parent.$watch(options.data, dataWatcher));
                             $scope.$on('$destroy', $scope.$parent.$watch(options.data + '.length', function() {
@@ -3713,7 +3755,7 @@ ngGridDirectives.directive('ngRow', ['$compile', '$domUtilityService', '$templat
     };
     return ngRow;
 }]);
-ngGridDirectives.directive('ngViewport', [function() {
+ngGridDirectives.directive('ngViewport', ['$timeout', function ($timeout) {
     return function($scope, elm) {
         var isMouseWheelActive;
         var prevScollLeft;
@@ -3760,7 +3802,7 @@ ngGridDirectives.directive('ngViewport', [function() {
             elm.off('mousewheel DOMMouseScroll', mousewheel);
         });
 
-        $scope.domAccessProvider.selectionHandlers($scope, elm);
+        $scope.domAccessProvider.selectionHandlers($scope, elm, $timeout);
     };
 }]);
 window.ngGrid.i18n['da'] = {

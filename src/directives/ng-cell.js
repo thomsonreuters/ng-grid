@@ -1,4 +1,4 @@
-﻿ngGridDirectives.directive('ngCell', ['$compile', '$domUtilityService', function ($compile, domUtilityService) {
+﻿ngGridDirectives.directive('ngCell', ['$compile', '$domUtilityService', '$timeout', function ($compile, domUtilityService, $timeout) {
     var ngCell = {
         scope: false,
         compile: function() {
@@ -27,7 +27,7 @@
                 },
                 post: function($scope, iElement) {
                     if ($scope.enableCellSelection) {
-                        $scope.domAccessProvider.selectionHandlers($scope, iElement);
+                        $scope.domAccessProvider.selectionHandlers($scope, iElement, $timeout);
                     }
                     
                     $scope.$on('$destroy', $scope.$on('ngGridEventDigestCell', function() {

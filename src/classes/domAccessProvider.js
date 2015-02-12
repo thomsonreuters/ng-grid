@@ -31,7 +31,7 @@ ngDomAccessProvider.prototype.focusCellElement = function ($scope, index) {
         }
     }
 };
-ngDomAccessProvider.prototype.selectionHandlers = function ($scope, elm) {
+ngDomAccessProvider.prototype.selectionHandlers = function ($scope, elm, $timeout) {
     var doingKeyDown = false;
     var self = this;
 
@@ -41,7 +41,7 @@ ngDomAccessProvider.prototype.selectionHandlers = function ($scope, elm) {
             return true;
         } else if (!doingKeyDown) {
             doingKeyDown = true;
-            var ret = ngMoveSelectionHandler($scope, elm, evt, self.grid);
+            var ret = ngMoveSelectionHandler($scope, elm, evt, self.grid, $timeout);
             doingKeyDown = false;
             return ret;
         }

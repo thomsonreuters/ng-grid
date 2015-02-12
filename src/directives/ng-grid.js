@@ -76,6 +76,7 @@
                         // if it is a string we can watch for data changes. otherwise you won't be able to update the grid data
                         if (typeof options.data === "string") {
                             var dataWatcher = function (a) {
+                                var lastClickedRowEntity = $scope.selectionProvider.lastClickedRow && $scope.selectionProvider.lastClickedRow.entity;
                                 // make a temporary copy of the data
                                 grid.data = $.extend([], a);
                                 grid.rowFactory.fixRowCache();
@@ -94,6 +95,34 @@
                                     $scope.$emit('ngGridEventSorted', grid.config.sortInfo);
                                 }
                                 $scope.$emit("ngGridEventData", grid.gridId);
+                                $timeout(function () {
+                                    var moveFocus = function () {
+                                        var tabbables;
+                                        var index = $scope.selectionProvider.lastFocusedElementIndex || 0;
+                                        var lastClickedRenderedRow = _.find($scope.renderedRows, function (row) { return lastClickedRowEntity == row.entity; });
+
+                                        if (lastClickedRenderedRow) {
+                                            tabbables = lastClickedRenderedRow.elm.find(":tabbable");
+                                            $scope.selectionProvider.lastClickedRow = lastClickedRenderedRow;
+                                        }
+                                        else {
+                                            var selectedRow = grid.$root.find(".ngRow.selected");
+                                            tabbables = selectedRow && selectedRow.find(":tabbable");
+                                        }
+
+                                        if (tabbables.length) {
+                                            $scope.selectionProvider.lastFocusedElement = $(index < tabbables.length ? tabbables[index] : tabbables[tabbables.length - 1]);
+                                        }
+                                    };
+
+                                    if (lastClickedRowEntity && !_.find($scope.renderedRows, function (row) { return lastClickedRowEntity == row.entity; })) {
+                                        grid.$viewport.scrollTop(grid.data.indexOf(lastClickedRowEntity) * $scope.rowHeight);
+                                        $timeout(moveFocus);
+                                    }
+                                    else {
+                                        moveFocus();
+                                    }
+                                });
                             };
                             $scope.$on('$destroy', $scope.$parent.$watch(options.data, dataWatcher));
                             $scope.$on('$destroy', $scope.$parent.$watch(options.data + '.length', function() {

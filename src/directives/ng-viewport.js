@@ -1,4 +1,4 @@
-ngGridDirectives.directive('ngViewport', [function() {
+ngGridDirectives.directive('ngViewport', ['$timeout', function ($timeout) {
     return function($scope, elm) {
         var isMouseWheelActive;
         var prevScollLeft;
@@ -45,6 +45,6 @@ ngGridDirectives.directive('ngViewport', [function() {
             elm.off('mousewheel DOMMouseScroll', mousewheel);
         });
 
-        $scope.domAccessProvider.selectionHandlers($scope, elm);
+        $scope.domAccessProvider.selectionHandlers($scope, elm, $timeout);
     };
 }]);

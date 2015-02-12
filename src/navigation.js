@@ -1,5 +1,5 @@
 //set event binding on the grid so we can select using the up/down keys
-var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
+var ngMoveSelectionHandler = function($scope, elm, evt, grid, $timeout) {
     if ($scope.selectionProvider.selectedItems === undefined) {
         return true;
     }
@@ -116,32 +116,45 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid) {
             r.continueSelection(evt);
             $scope.$emit('ngGridEventDigestGridParent');
 
+            var scrolled = false;
+
             if ($scope.selectionProvider.lastClickedRow.renderedRowIndex >= $scope.renderedRows.length - EXCESS_ROWS - 2) {
                 grid.$viewport.scrollTop(grid.$viewport.scrollTop() + $scope.rowHeight);
+                scrolled = true;
             }
             else if ($scope.selectionProvider.lastClickedRow.renderedRowIndex <= EXCESS_ROWS + 2) {
                 grid.$viewport.scrollTop(grid.$viewport.scrollTop() - $scope.rowHeight);
+                scrolled = true;
             }
 
-            if (charCode === 38 || charCode === 40) {
-                if ($scope.selectionProvider.lastClickedRow.elm || $scope.selectionProvider.lastClickedRow.renderedRowIndex != undefined) {
-                    var lastClickedRowElement = $scope.selectionProvider.lastClickedRow.elm || $scope.renderedRows[$scope.selectionProvider.lastClickedRow.renderedRowIndex].elm;
-                    var tabbableRowElements = lastClickedRowElement.find(":tabbable");
+            var moveFocus = function () {
+                if (charCode === 38 || charCode === 40) {
+                    if ($scope.selectionProvider.lastClickedRow.elm || $scope.selectionProvider.lastClickedRow.renderedRowIndex != undefined) {
+                        var lastClickedRowElement = $scope.selectionProvider.lastClickedRow.elm || $scope.renderedRows[$scope.selectionProvider.lastClickedRow.renderedRowIndex].elm;
+                        var tabbableRowElements = lastClickedRowElement.find(":tabbable");
 
-                    if ($scope.selectionProvider.lastFocusedElementIndex == undefined) {
-                        $scope.selectionProvider.lastFocusedElementIndex = 0;
-                    }
+                        if ($scope.selectionProvider.lastFocusedElementIndex == undefined) {
+                            $scope.selectionProvider.lastFocusedElementIndex = 0;
+                        }
 
-                    if (tabbableRowElements.length) {
-                        $scope.selectionProvider.lastFocusedElement = $(tabbableRowElements[$scope.selectionProvider.lastFocusedElementIndex > tabbableRowElements.length - 1 ? tabbableRowElements.length - 1 : $scope.selectionProvider.lastFocusedElementIndex]);
-                    }
-                    else {
-                        grid.$viewport.find(".ngRow").attr("tabindex", "0");
-                        $scope.selectionProvider.lastFocusedElement = lastClickedRowElement;
-                    }
+                        if (tabbableRowElements.length) {
+                            $scope.selectionProvider.lastFocusedElement = $(tabbableRowElements[$scope.selectionProvider.lastFocusedElementIndex > tabbableRowElements.length - 1 ? tabbableRowElements.length - 1 : $scope.selectionProvider.lastFocusedElementIndex]);
+                        }
+                        else {
+                            grid.$viewport.find(".ngRow").attr("tabindex", "0");
+                            $scope.selectionProvider.lastFocusedElement = lastClickedRowElement;
+                        }
 
-                    $scope.selectionProvider.lastFocusedElement.focus();
+                        $scope.selectionProvider.lastFocusedElement.focus();
+                    }
                 }
+            };
+
+            if (scrolled) {
+                $timeout(moveFocus);
+            }
+            else {
+                moveFocus();
             }
         }
     }
