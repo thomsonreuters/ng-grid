@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 03/12/2015 09:24
+* Compiled At: 03/12/2015 11:31
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -1119,33 +1119,35 @@ var ngEventProvider = function (grid, $scope, domUtilityService, $timeout) {
     //For JQueryUI
     self.setDraggables = function() {
         if (!grid.config.jqueryUIDraggable) {
-            //Fix for FireFox. Instead of using jQuery on('dragstart', function) on find, we have to use addEventListeners for each column.
-            var columns = grid.$root.find('.ngHeaderSortColumn'); //have to iterate if using addEventListener
-            angular.forEach(columns, function(col){
-                if(col.className && col.className.indexOf("ngHeaderSortColumn") !== -1){
-                    col.setAttribute('draggable', 'true');
-                    //jQuery 'on' function doesn't have  dataTransfer as part of event in handler unless added to event props, which is not recommended
-                    //See more here: http://api.jquery.com/category/events/event-object/
-                    if (col.addEventListener) { //IE8 doesn't have drag drop or event listeners
-                        col.addEventListener('dragstart', self.dragStart);
+            if (grid.$root) {
+                //Fix for FireFox. Instead of using jQuery on('dragstart', function) on find, we have to use addEventListeners for each column.
+                var columns = grid.$root.find('.ngHeaderSortColumn'); //have to iterate if using addEventListener
+                angular.forEach(columns, function(col){
+                    if(col.className && col.className.indexOf("ngHeaderSortColumn") !== -1){
+                        col.setAttribute('draggable', 'true');
+                        //jQuery 'on' function doesn't have  dataTransfer as part of event in handler unless added to event props, which is not recommended
+                        //See more here: http://api.jquery.com/category/events/event-object/
+                        if (col.addEventListener) { //IE8 doesn't have drag drop or event listeners
+                            col.addEventListener('dragstart', self.dragStart);
 
-                        angular.element(col).on('$destroy', function() {
-                            angular.element(col).off('dragstart', self.dragStart);
-                            col.removeEventListener('dragstart', self.dragStart);
-                        });
+                            angular.element(col).on('$destroy', function() {
+                                angular.element(col).off('dragstart', self.dragStart);
+                                col.removeEventListener('dragstart', self.dragStart);
+                            });
+                        }
                     }
+                });
+                if (navigator.userAgent.indexOf("MSIE") !== -1){
+                    //call native IE dragDrop() to start dragging
+                    var sortColumn = grid.$root.find('.ngHeaderSortColumn');
+                    sortColumn.bind('selectstart', function () { 
+                        this.dragDrop(); 
+                        return false; 
+                    });
+                    angular.element(sortColumn).on('$destroy', function() {
+                        sortColumn.off('selectstart');
+                    });
                 }
-            });
-            if (navigator.userAgent.indexOf("MSIE") !== -1){
-                //call native IE dragDrop() to start dragging
-                var sortColumn = grid.$root.find('.ngHeaderSortColumn');
-                sortColumn.bind('selectstart', function () { 
-                    this.dragDrop(); 
-                    return false; 
-                });
-                angular.element(sortColumn).on('$destroy', function() {
-                    sortColumn.off('selectstart');
-                });
             }
         } else {
             if (grid.$root) {
