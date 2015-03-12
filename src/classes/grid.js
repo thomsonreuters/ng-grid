@@ -267,13 +267,15 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
         self.data = self.config.data; // we cannot watch for updates if you don't pass the string name
     }
     self.calcMaxCanvasHeight = function() {
-        var calculatedHeight;
+        var calculatedHeight = 0;
         if(self.config.groups.length > 0){
             calculatedHeight = self.rowFactory.parsedData.filter(function(e) {
                 return !e[NG_HIDDEN];
             }).length * self.config.rowHeight;
         } else {
-            calculatedHeight = self.filteredRows.length * self.config.rowHeight;
+            for (var rowIndex = 0; rowIndex < self.filteredRows.length; rowIndex++) {
+                calculatedHeight += self.filteredRows[rowIndex].rowHeight || self.config.rowHeight;
+            }
         }
         return calculatedHeight;
     };
@@ -808,7 +810,17 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
         if (scrollTop > 0 && self.$viewport[0].scrollHeight - scrollTop <= self.$viewport.outerHeight()) {
             $scope.$emit('ngGridEventScroll');
         }
-        var rowIndex = Math.floor(scrollTop / self.config.rowHeight);
+
+        var rowIndex, rowsHeight = 0;
+
+        for (rowIndex = 0; rowIndex < self.filteredRows.length; rowIndex++) {
+            rowsHeight += self.filteredRows[rowIndex].rowHeight || self.config.rowHeight;
+
+            if (rowsHeight > scrollTop) {
+                break;
+            }
+        }
+
         var newRange;
         if (self.filteredRows.length > self.config.virtualizationThreshold) {
             // Have we hit the threshold going down?

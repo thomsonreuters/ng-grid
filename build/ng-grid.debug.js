@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 02/12/2015 13:27
+* Compiled At: 03/12/2015 09:24
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -1655,13 +1655,15 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
         self.data = self.config.data; // we cannot watch for updates if you don't pass the string name
     }
     self.calcMaxCanvasHeight = function() {
-        var calculatedHeight;
+        var calculatedHeight = 0;
         if(self.config.groups.length > 0){
             calculatedHeight = self.rowFactory.parsedData.filter(function(e) {
                 return !e[NG_HIDDEN];
             }).length * self.config.rowHeight;
         } else {
-            calculatedHeight = self.filteredRows.length * self.config.rowHeight;
+            for (var rowIndex = 0; rowIndex < self.filteredRows.length; rowIndex++) {
+                calculatedHeight += self.filteredRows[rowIndex].rowHeight || self.config.rowHeight;
+            }
         }
         return calculatedHeight;
     };
@@ -2196,7 +2198,17 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
         if (scrollTop > 0 && self.$viewport[0].scrollHeight - scrollTop <= self.$viewport.outerHeight()) {
             $scope.$emit('ngGridEventScroll');
         }
-        var rowIndex = Math.floor(scrollTop / self.config.rowHeight);
+
+        var rowIndex, rowsHeight = 0;
+
+        for (rowIndex = 0; rowIndex < self.filteredRows.length; rowIndex++) {
+            rowsHeight += self.filteredRows[rowIndex].rowHeight || self.config.rowHeight;
+
+            if (rowsHeight > scrollTop) {
+                break;
+            }
+        }
+
         var newRange;
         if (self.filteredRows.length > self.config.virtualizationThreshold) {
             // Have we hit the threshold going down?
@@ -3054,6 +3066,21 @@ var ngStyleProvider = function($scope, grid) {
     };
     $scope.canvasStyle = function() {
         return { "height": grid.maxCanvasHt + "px" };
+    };
+    $scope.rowsHolderStyle = function () {
+        var rowIndex, rowsHeight = 0;
+
+        if ($scope.renderedRows.length) {
+            _.each($scope.renderedRows, function (row) { 
+                grid.filteredRows[row.rowIndex].rowHeight = row.elm && row.elm.height() || grid.config.rowHeight;
+            });
+
+            for (rowIndex = 0; rowIndex < $scope.renderedRows[0].rowIndex; rowIndex++) {
+                rowsHeight += grid.filteredRows[rowIndex].rowHeight || grid.config.rowHeight;
+            }
+        }
+
+        return { "top": rowsHeight + "px", "height": $scope.viewportDimHeight() + "px" };
     };
     $scope.headerScrollerStyle = function() {
         return { "height": grid.config.headerRowHeight + "px" };
@@ -4104,7 +4131,11 @@ angular.module('ngGrid').run(['$templateCache', function($templateCache) {
     "\n" +
     "    <div class=\"ngCanvas\" ng-style=\"canvasStyle()\">\r" +
     "\n" +
-    "        <div ng-style=\"rowStyle(row)\" ng-repeat=\"row in renderedRows\" ng-click=\"row.toggleSelected($event)\" ng-class=\"row.alternatingRowClass()\" ng-row></div>\r" +
+    "        <div class=\"ngRowsHolder\" ng-style=\"rowsHolderStyle()\">\r" +
+    "\n" +
+    "            <div ng-style=\"rowStyle(row)\" ng-repeat=\"row in renderedRows\" ng-click=\"row.toggleSelected($event)\" ng-class=\"row.alternatingRowClass()\" ng-row></div>\r" +
+    "\n" +
+    "        </div>\r" +
     "\n" +
     "    </div>\r" +
     "\n" +

@@ -12,6 +12,21 @@
     $scope.canvasStyle = function() {
         return { "height": grid.maxCanvasHt + "px" };
     };
+    $scope.rowsHolderStyle = function () {
+        var rowIndex, rowsHeight = 0;
+
+        if ($scope.renderedRows.length) {
+            _.each($scope.renderedRows, function (row) { 
+                grid.filteredRows[row.rowIndex].rowHeight = row.elm && row.elm.height() || grid.config.rowHeight;
+            });
+
+            for (rowIndex = 0; rowIndex < $scope.renderedRows[0].rowIndex; rowIndex++) {
+                rowsHeight += grid.filteredRows[rowIndex].rowHeight || grid.config.rowHeight;
+            }
+        }
+
+        return { "top": rowsHeight + "px", "height": $scope.viewportDimHeight() + "px" };
+    };
     $scope.headerScrollerStyle = function() {
         return { "height": grid.config.headerRowHeight + "px" };
     };
