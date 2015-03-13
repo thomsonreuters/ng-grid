@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 03/12/2015 11:31
+* Compiled At: 03/13/2015 13:52
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -3432,7 +3432,7 @@ ngGridDirectives.directive('ngGrid', ['$compile', '$filter', '$templateCache', '
                                             $scope.selectionProvider.lastClickedRow = lastClickedRenderedRow;
                                         }
                                         else {
-                                            var selectedRow = grid.$root.find(".ngRow.selected");
+                                            var selectedRow = grid.$root && grid.$root.find(".ngRow.selected");
                                             tabbables = selectedRow && selectedRow.find(":tabbable");
                                         }
 

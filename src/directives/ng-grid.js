@@ -106,7 +106,7 @@
                                             $scope.selectionProvider.lastClickedRow = lastClickedRenderedRow;
                                         }
                                         else {
-                                            var selectedRow = grid.$root.find(".ngRow.selected");
+                                            var selectedRow = grid.$root && grid.$root.find(".ngRow.selected");
                                             tabbables = selectedRow && selectedRow.find(":tabbable");
                                         }
 
