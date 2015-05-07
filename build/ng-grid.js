@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 03/13/2015 13:52
+* Compiled At: 05/07/2015 17:36
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -3005,6 +3005,10 @@ ngGridDirectives.directive('ngGrid', ['$compile', '$filter', '$templateCache', '
                     options.gridDim = new ngDimension({ outerHeight: $($element).height(), outerWidth: $($element).width() });
 
                     var grid = new ngGrid($scope, options, sortService, domUtilityService, $filter, $templateCache, $utils, $timeout, $parse, $http, $q);
+
+                    $templateCache.put('gridTemplate.html_' + grid.gridId, '');
+
+                    options.gridId = grid.gridId;
                     $scope.$on('$destroy', function cleanOptions() {
                         options.gridDim = null;
                         options.selectRow = null;
@@ -3118,7 +3122,8 @@ ngGridDirectives.directive('ngGrid', ['$compile', '$filter', '$templateCache', '
                         if (options.jqueryUITheme) {
                             iElement.addClass('ui-widget');
                         }
-                        iElement.append($compile($templateCache.get('gridTemplate.html'))($scope));
+                        var gridTemplate = $templateCache.get('gridTemplate.html_' + grid.gridId) || $templateCache.get('gridTemplate.html');
+                        iElement.append($compile(gridTemplate)($scope));
                         domUtilityService.AssignGridContainers($scope, iElement, grid);
                         grid.eventProvider = new ngEventProvider(grid, $scope, domUtilityService, $timeout);
                         options.selectRow = function (rowIndex, state) {

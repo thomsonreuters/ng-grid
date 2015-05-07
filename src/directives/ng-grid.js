@@ -10,6 +10,10 @@
 
                     var grid = new ngGrid($scope, options, sortService, domUtilityService, $filter, $templateCache, $utils, $timeout, $parse, $http, $q);
 
+                    $templateCache.put('gridTemplate.html_' + grid.gridId, '');
+
+                    options.gridId = grid.gridId;
+
                     // Set up cleanup now in case something fails
                     $scope.$on('$destroy', function cleanOptions() {
                         options.gridDim = null;
@@ -140,7 +144,8 @@
                         if (options.jqueryUITheme) {
                             iElement.addClass('ui-widget');
                         }
-                        iElement.append($compile($templateCache.get('gridTemplate.html'))($scope)); // make sure that if any of these change, we re-fire the calc logic
+                        var gridTemplate = $templateCache.get('gridTemplate.html_' + grid.gridId) || $templateCache.get('gridTemplate.html');
+                        iElement.append($compile(gridTemplate)($scope)); // make sure that if any of these change, we re-fire the calc logic
                         //walk the element's graph and the correct properties on the grid
                         domUtilityService.AssignGridContainers($scope, iElement, grid);
                         //now use the manager to assign the event handlers

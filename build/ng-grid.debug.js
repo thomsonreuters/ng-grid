@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 03/13/2015 13:52
+* Compiled At: 05/07/2015 17:36
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -3336,6 +3336,10 @@ ngGridDirectives.directive('ngGrid', ['$compile', '$filter', '$templateCache', '
 
                     var grid = new ngGrid($scope, options, sortService, domUtilityService, $filter, $templateCache, $utils, $timeout, $parse, $http, $q);
 
+                    $templateCache.put('gridTemplate.html_' + grid.gridId, '');
+
+                    options.gridId = grid.gridId;
+
                     // Set up cleanup now in case something fails
                     $scope.$on('$destroy', function cleanOptions() {
                         options.gridDim = null;
@@ -3466,7 +3470,8 @@ ngGridDirectives.directive('ngGrid', ['$compile', '$filter', '$templateCache', '
                         if (options.jqueryUITheme) {
                             iElement.addClass('ui-widget');
                         }
-                        iElement.append($compile($templateCache.get('gridTemplate.html'))($scope)); // make sure that if any of these change, we re-fire the calc logic
+                        var gridTemplate = $templateCache.get('gridTemplate.html_' + grid.gridId) || $templateCache.get('gridTemplate.html');
+                        iElement.append($compile(gridTemplate)($scope)); // make sure that if any of these change, we re-fire the calc logic
                         //walk the element's graph and the correct properties on the grid
                         domUtilityService.AssignGridContainers($scope, iElement, grid);
                         //now use the manager to assign the event handlers
