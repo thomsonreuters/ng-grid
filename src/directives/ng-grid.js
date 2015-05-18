@@ -256,9 +256,9 @@
                         var keydown = function (e) {
                             if (grid.config.noTabInterference && e.keyCode === 9) {
                                 var tabbableElements = $(document).find(":tabbable");
-                                var parents = $(e.target).parents(".ngViewport");
+                                var parents = $(e.target).parents(".ngCanvas");
 
-                                if (parents.length && parents[0] == grid.$viewport[0]) {
+                                if (parents.length && parents[0] == grid.$canvas[0]) {
                                     if (e.shiftKey) {
                                         grid.$viewport.focus();
                                     }
@@ -312,7 +312,7 @@
                         $(document).bind('keydown', keydown);
 
                         var tempFocus = function (e) {
-                            if (!e.relatedTarget || !$(e.relatedTarget).parents(".ngViewport").length && e.relatedTarget != grid.$viewport[0]) {
+                            if (!e.relatedTarget || !$(e.relatedTarget).parents(".ngCanvas").length && e.relatedTarget != grid.$viewport[0]) {
                                 setFocusToViewport();
                             }
                         };

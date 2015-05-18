@@ -17,7 +17,7 @@
 
         if ($scope.renderedRows.length) {
             _.each($scope.renderedRows, function (row) { 
-                grid.filteredRows[row.rowIndex].rowHeight = row.elm && row.elm.height() || grid.config.rowHeight;
+                grid.filteredRows[row.rowIndex].rowHeight = row.elm && row.elm.outerHeight() || grid.config.rowHeight;
             });
 
             for (rowIndex = 0; rowIndex < $scope.renderedRows[0].rowIndex; rowIndex++) {

@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 05/07/2015 17:36
+* Compiled At: 05/18/2015 15:28
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -3074,7 +3074,7 @@ var ngStyleProvider = function($scope, grid) {
 
         if ($scope.renderedRows.length) {
             _.each($scope.renderedRows, function (row) { 
-                grid.filteredRows[row.rowIndex].rowHeight = row.elm && row.elm.height() || grid.config.rowHeight;
+                grid.filteredRows[row.rowIndex].rowHeight = row.elm && row.elm.outerHeight() || grid.config.rowHeight;
             });
 
             for (rowIndex = 0; rowIndex < $scope.renderedRows[0].rowIndex; rowIndex++) {
@@ -3582,9 +3582,9 @@ ngGridDirectives.directive('ngGrid', ['$compile', '$filter', '$templateCache', '
                         var keydown = function (e) {
                             if (grid.config.noTabInterference && e.keyCode === 9) {
                                 var tabbableElements = $(document).find(":tabbable");
-                                var parents = $(e.target).parents(".ngViewport");
+                                var parents = $(e.target).parents(".ngCanvas");
 
-                                if (parents.length && parents[0] == grid.$viewport[0]) {
+                                if (parents.length && parents[0] == grid.$canvas[0]) {
                                     if (e.shiftKey) {
                                         grid.$viewport.focus();
                                     }
@@ -3638,7 +3638,7 @@ ngGridDirectives.directive('ngGrid', ['$compile', '$filter', '$templateCache', '
                         $(document).bind('keydown', keydown);
 
                         var tempFocus = function (e) {
-                            if (!e.relatedTarget || !$(e.relatedTarget).parents(".ngViewport").length && e.relatedTarget != grid.$viewport[0]) {
+                            if (!e.relatedTarget || !$(e.relatedTarget).parents(".ngCanvas").length && e.relatedTarget != grid.$viewport[0]) {
                                 setFocusToViewport();
                             }
                         };
