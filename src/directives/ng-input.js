@@ -49,20 +49,23 @@ ngGridDirectives.directive('ngInput', [function() {
 
             elm.bind('mousedown', mousedown);
 
+            function blur() {
+                scope.$emit('ngGridEventEndCellEdit');
+            }
+
+            elm.bind('blur', blur);
+
             elm.on('$destroy', function() {
                 elm.off('keydown', keydown);
                 elm.off('click', click);
                 elm.off('mousedown', mousedown);
+                elm.off('blur', blur);
             });
 
             scope.$on('$destroy', scope.$on('ngGridEventStartCellEdit', function () {
                 elm.focus();
                 elm.select();
             }));
-
-            angular.element(elm).bind('blur', function () {
-                scope.$emit('ngGridEventEndCellEdit');
-            });
         }
     };
 }]);

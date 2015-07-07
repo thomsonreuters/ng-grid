@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 05/18/2015 15:28
+* Compiled At: 07/07/2015 13:43
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -3373,20 +3373,23 @@ ngGridDirectives.directive('ngInput', [function() {
 
             elm.bind('mousedown', mousedown);
 
+            function blur() {
+                scope.$emit('ngGridEventEndCellEdit');
+            }
+
+            elm.bind('blur', blur);
+
             elm.on('$destroy', function() {
                 elm.off('keydown', keydown);
                 elm.off('click', click);
                 elm.off('mousedown', mousedown);
+                elm.off('blur', blur);
             });
 
             scope.$on('$destroy', scope.$on('ngGridEventStartCellEdit', function () {
                 elm.focus();
                 elm.select();
             }));
-
-            angular.element(elm).bind('blur', function () {
-                scope.$emit('ngGridEventEndCellEdit');
-            });
         }
     };
 }]);
