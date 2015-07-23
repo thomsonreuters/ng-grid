@@ -43,6 +43,8 @@ ngGridDirectives.directive('ngCellHasFocus', ['$domUtilityService',
             elm.bind('click', click); 
 
             function focus (evt) {
+                elm.off('blur', blur);
+                elm.bind('blur', blur);
                 isFocused = true;
                 if($scope.enableCellEditOnFocus && !isCellEditableOnMouseDown) {
                     focusOnInputElement($scope,elm);
