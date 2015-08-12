@@ -1,4 +1,4 @@
-ngGridDirectives.directive('ngInput', [function() {
+ngGridDirectives.directive('ngInput', ['$timeout', function ($timeout) {
     return {
         require: 'ngModel',
         link: function (scope, elm, attrs, ngModel) {
@@ -11,6 +11,18 @@ ngGridDirectives.directive('ngInput', [function() {
 
             function keydown (evt) {
                 switch (evt.keyCode) {
+                    case 9:
+                        var cellElm = elm.parents("*[ng-cell-has-focus]");
+
+                        elm.blur();
+
+                        cellElm.focus();
+
+                        evt.which = evt.keyCode = 39;
+
+                        ngMoveSelectionHandler(scope, null, evt, scope.domAccessProvider.grid, $timeout);
+
+                        return false;
                     case 37: // Left arrow
                     case 38: // Up arrow
                     case 39: // Right arrow
@@ -27,7 +39,19 @@ ngGridDirectives.directive('ngInput', [function() {
                         break;
                     case 13: // Enter (Leave Field)
                         if(scope.totalFilteredItemsLength() - 1 > scope.row.rowIndex && scope.row.rowIndex > 0  || scope.col.enableCellEdit) {
+                            var cellElm = elm.parents("*[ng-cell-has-focus]");
+
                             elm.blur();
+
+                            evt.which = evt.keyCode = 40;
+
+                            var ret = ngMoveSelectionHandler(scope, null, evt, scope.domAccessProvider.grid, $timeout);
+
+                            if (!ret) {
+                                cellElm.focus();
+                            }
+
+                            return ret;
                         }
                         break;
                 }

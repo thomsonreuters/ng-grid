@@ -105,14 +105,14 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid, $timeout) {
     else if (charCode === 13 || !grid.config.noTabInterference && charCode === 9 || charCode === 37 || charCode === 39) {
         clickedRow = $scope.selectionProvider.clickedRow;
 
-        if (evt.target == evt.currentTarget) { // .ngViewport
+        if (evt.target == grid.$viewport[0]) {
             clickedRow = $scope.selectionProvider.lastClickedRow = items[0];
         }
     }
 
     if (offset || clickedRow) {
         var r = clickedRow || items[rowIndex + offset];
-        if (r.beforeSelectionChange(r, evt)) {
+        if (r && r.beforeSelectionChange(r, evt)) {
             r.continueSelection(evt);
             $scope.$emit('ngGridEventDigestGridParent');
 

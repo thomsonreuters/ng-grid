@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 07/23/2015 09:20
+* Compiled At: 08/12/2015 14:28
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -133,14 +133,14 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid, $timeout) {
     else if (charCode === 13 || !grid.config.noTabInterference && charCode === 9 || charCode === 37 || charCode === 39) {
         clickedRow = $scope.selectionProvider.clickedRow;
 
-        if (evt.target == evt.currentTarget) { 
+        if (evt.target == grid.$viewport[0]) {
             clickedRow = $scope.selectionProvider.lastClickedRow = items[0];
         }
     }
 
     if (offset || clickedRow) {
         var r = clickedRow || items[rowIndex + offset];
-        if (r.beforeSelectionChange(r, evt)) {
+        if (r && r.beforeSelectionChange(r, evt)) {
             r.continueSelection(evt);
             $scope.$emit('ngGridEventDigestGridParent');
 
@@ -2089,6 +2089,8 @@ ngRow.prototype.ensureEntity = function (expected) {
 	}
 };
 ngRow.prototype.toggleSelected = function (event) {
+	this.selectionProvider.lastClickedRow = this;
+
 	if (!this.config.enableRowSelection && !this.config.enableCellSelection || event.target.tagName === "LABEL") {
 		return true;
 	}
@@ -3327,7 +3329,7 @@ ngGridDirectives.directive('ngHeaderRow', ['$compile', '$templateCache', functio
     };
     return ngHeaderRow;
 }]);
-ngGridDirectives.directive('ngInput', [function() {
+ngGridDirectives.directive('ngInput', ['$timeout', function ($timeout) {
     return {
         require: 'ngModel',
         link: function (scope, elm, attrs, ngModel) {
@@ -3339,6 +3341,18 @@ ngGridDirectives.directive('ngInput', [function() {
 
             function keydown (evt) {
                 switch (evt.keyCode) {
+                    case 9:
+                        var cellElm = elm.parents("*[ng-cell-has-focus]");
+
+                        elm.blur();
+
+                        cellElm.focus();
+
+                        evt.which = evt.keyCode = 39;
+
+                        ngMoveSelectionHandler(scope, null, evt, scope.domAccessProvider.grid, $timeout);
+
+                        return false;
                     case 37: 
                     case 38: 
                     case 39: 
@@ -3355,7 +3369,19 @@ ngGridDirectives.directive('ngInput', [function() {
                         break;
                     case 13: 
                         if(scope.totalFilteredItemsLength() - 1 > scope.row.rowIndex && scope.row.rowIndex > 0  || scope.col.enableCellEdit) {
+                            var cellElm = elm.parents("*[ng-cell-has-focus]");
+
                             elm.blur();
+
+                            evt.which = evt.keyCode = 40;
+
+                            var ret = ngMoveSelectionHandler(scope, null, evt, scope.domAccessProvider.grid, $timeout);
+
+                            if (!ret) {
+                                cellElm.focus();
+                            }
+
+                            return ret;
                         }
                         break;
                 }

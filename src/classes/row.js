@@ -27,6 +27,8 @@ ngRow.prototype.ensureEntity = function (expected) {
 	}
 };
 ngRow.prototype.toggleSelected = function (event) {
+	this.selectionProvider.lastClickedRow = this;
+
 	if (!this.config.enableRowSelection && !this.config.enableCellSelection || event.target.tagName === "LABEL") {
 		return true;
 	}
