@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 08/12/2015 14:28
+* Compiled At: 01/12/2016 18:27
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -110,6 +110,28 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid, $timeout) {
         if (tabbableElements.length) {
             firstInRow = evt.target == tabbableElements[0];
             lastInRow = evt.target == tabbableElements[tabbableElements.length - 1];
+        }
+    }
+    else if (charCode === 40) {
+        var lastClickedRowElement = $scope.selectionProvider.lastClickedRow.elm || $scope.renderedRows[$scope.selectionProvider.lastClickedRow.renderedRowIndex].elm;
+        var tabbableElements = lastClickedRowElement.find(":tabbable");
+        var currentElementClassList = evt.target.classList;
+        var currentElementColumn = "";
+
+        for (var i = 0; i < currentElementClassList.length; i++) {
+            if (currentElementClassList[i].indexOf("col") > -1) {
+                currentElementColumn = currentElementClassList[i];
+                break;
+            }
+        }
+
+        if (tabbableElements.length && currentElementColumn) {
+            for (i = 0; i < tabbableElements.length; i++) {
+                if ($(tabbableElements[i]).find("." + currentElementColumn).length > 0) {
+                    $scope.selectionProvider.lastFocusedElementIndex = i;
+                    break;
+                }
+            }
         }
     }
 
@@ -1654,7 +1676,10 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
         if (asterisksArray.length > 0) {
             self.config.maintainColumnRatios = self.config.maintainColumnRatios !== false;
             var remainingWidth = self.rootDim.outerWidth - totalWidth;
-            if (self.maxCanvasHt > $scope.viewportDimHeight()) {
+            var newItemRow = self.$root.find('.new-item-row'); 
+            var newItemRowHeight = newItemRow ? self.rowFactory.rowHeight : 0;
+            var summHeight = self.maxCanvasHt + newItemRowHeight;
+            if (summHeight > $scope.viewportDimHeight()) {
                 remainingWidth -= domUtilityService.ScrollW;
             }
             var asteriskVal = Math.floor(remainingWidth / asteriskNum);
@@ -1668,7 +1693,8 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
                 var isLast = (i === (asterisksArray.length - 1));
                 if(isLast && totalWidth < self.rootDim.outerWidth){
                     var gridWidthDifference = self.rootDim.outerWidth - totalWidth;
-                    if(self.maxCanvasHt > $scope.viewportDimHeight()){
+                    var summHeight = self.maxCanvasHt + newItemRowHeight;
+                    if (summHeight > $scope.viewportDimHeight()) {
                         gridWidthDifference -= domUtilityService.ScrollW;
                     }
                     ngColumn.width += gridWidthDifference;

@@ -83,6 +83,28 @@ var ngMoveSelectionHandler = function($scope, elm, evt, grid, $timeout) {
             lastInRow = evt.target == tabbableElements[tabbableElements.length - 1];
         }
     }
+    else if (charCode === 40) {
+        var lastClickedRowElement = $scope.selectionProvider.lastClickedRow.elm || $scope.renderedRows[$scope.selectionProvider.lastClickedRow.renderedRowIndex].elm;
+        var tabbableElements = lastClickedRowElement.find(":tabbable");
+        var currentElementClassList = evt.target.classList;
+        var currentElementColumn = "";
+
+        for (var i = 0; i < currentElementClassList.length; i++) {
+            if (currentElementClassList[i].indexOf("col") > -1) {
+                currentElementColumn = currentElementClassList[i];
+                break;
+            }
+        }
+
+        if (tabbableElements.length && currentElementColumn) {
+            for (i = 0; i < tabbableElements.length; i++) {
+                if ($(tabbableElements[i]).find("." + currentElementColumn).length > 0) {
+                    $scope.selectionProvider.lastFocusedElementIndex = i;
+                    break;
+                }
+            }
+        }
+    }
 
     var items;
     if ($scope.configGroups.length > 0) {

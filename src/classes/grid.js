@@ -518,7 +518,10 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
             // get the remaining width
             var remainingWidth = self.rootDim.outerWidth - totalWidth;
             // are we overflowing vertically?
-            if (self.maxCanvasHt > $scope.viewportDimHeight()) {
+            var newItemRow = self.$root.find('.new-item-row'); // in case of editable row outside the Canvas 
+            var newItemRowHeight = newItemRow ? self.rowFactory.rowHeight : 0;
+            var summHeight = self.maxCanvasHt + newItemRowHeight;
+            if (summHeight > $scope.viewportDimHeight()) {
                 //compensate for scrollbar
                 remainingWidth -= domUtilityService.ScrollW;
             }
@@ -538,7 +541,8 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
                 //if last asterisk and doesn't fill width of grid, add the difference
                 if(isLast && totalWidth < self.rootDim.outerWidth){
                     var gridWidthDifference = self.rootDim.outerWidth - totalWidth;
-                    if(self.maxCanvasHt > $scope.viewportDimHeight()){
+                    var summHeight = self.maxCanvasHt + newItemRowHeight;
+                    if (summHeight > $scope.viewportDimHeight()) {
                         gridWidthDifference -= domUtilityService.ScrollW;
                     }
                     ngColumn.width += gridWidthDifference;
