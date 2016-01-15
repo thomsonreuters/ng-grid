@@ -518,7 +518,7 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
             // get the remaining width
             var remainingWidth = self.rootDim.outerWidth - totalWidth;
             // are we overflowing vertically?
-            var newItemRow = self.$root.find('.new-item-row'); // in case of editable row outside the Canvas 
+            var newItemRow = self.$root && self.$root.find('.new-item-row'); // in case of editable row outside the Canvas
             var newItemRowHeight = newItemRow ? self.rowFactory.rowHeight : 0;
             var summHeight = self.maxCanvasHt + newItemRowHeight;
             if (summHeight > $scope.viewportDimHeight()) {

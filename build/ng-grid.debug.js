@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 01/12/2016 18:27
+* Compiled At: 01/15/2016 15:12
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -1930,7 +1930,7 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
             // get the remaining width
             var remainingWidth = self.rootDim.outerWidth - totalWidth;
             // are we overflowing vertically?
-            var newItemRow = self.$root.find('.new-item-row'); // in case of editable row outside the Canvas 
+            var newItemRow = self.$root && self.$root.find('.new-item-row'); // in case of editable row outside the Canvas
             var newItemRowHeight = newItemRow ? self.rowFactory.rowHeight : 0;
             var summHeight = self.maxCanvasHt + newItemRowHeight;
             if (summHeight > $scope.viewportDimHeight()) {

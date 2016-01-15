@@ -2,7 +2,7 @@
 * ng-grid JavaScript Library
 * Authors: https://github.com/angular-ui/ng-grid/blob/master/README.md 
 * License: MIT (http://www.opensource.org/licenses/mit-license.php)
-* Compiled At: 01/12/2016 18:27
+* Compiled At: 01/15/2016 15:12
 ***********************************************/
 (function(window, $) {
 'use strict';
@@ -1676,7 +1676,7 @@ var ngGrid = function ($scope, options, sortService, domUtilityService, $filter,
         if (asterisksArray.length > 0) {
             self.config.maintainColumnRatios = self.config.maintainColumnRatios !== false;
             var remainingWidth = self.rootDim.outerWidth - totalWidth;
-            var newItemRow = self.$root.find('.new-item-row'); 
+            var newItemRow = self.$root && self.$root.find('.new-item-row'); 
             var newItemRowHeight = newItemRow ? self.rowFactory.rowHeight : 0;
             var summHeight = self.maxCanvasHt + newItemRowHeight;
             if (summHeight > $scope.viewportDimHeight()) {
