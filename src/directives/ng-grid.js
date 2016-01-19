@@ -106,12 +106,12 @@
                                         var lastClickedRenderedRow = _.find($scope.renderedRows, function (row) { return lastClickedRowEntity == row.entity; });
 
                                         if (lastClickedRenderedRow) {
-                                            tabbables = lastClickedRenderedRow.elm.find(":tabbable");
+                                            tabbables = lastClickedRenderedRow.elm.find(":tabbable") || [];
                                             $scope.selectionProvider.lastClickedRow = lastClickedRenderedRow;
                                         }
                                         else {
                                             var selectedRow = grid.$root && grid.$root.find(".ngRow.selected");
-                                            tabbables = selectedRow && selectedRow.find(":tabbable");
+                                            tabbables = selectedRow && selectedRow.find(":tabbable") || [];
                                         }
 
                                         if (tabbables.length) {
